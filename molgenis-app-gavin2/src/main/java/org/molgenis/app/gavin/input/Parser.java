@@ -3,7 +3,6 @@ package org.molgenis.app.gavin.input;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.molgenis.app.gavin.input.Files.getLines;
-import static org.molgenis.app.gavin.input.model.LineType.CADD;
 import static org.molgenis.app.gavin.input.model.LineType.COMMENT;
 import static org.molgenis.app.gavin.input.model.LineType.ERROR;
 import static org.molgenis.app.gavin.input.model.LineType.INDEL_NOCADD;
@@ -21,38 +20,29 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-import org.molgenis.app.gavin.input.model.CaddVariant;
 import org.molgenis.app.gavin.input.model.LineType;
 import org.molgenis.app.gavin.input.model.Variant;
 import org.molgenis.app.gavin.input.model.VcfVariant;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
-/**
- * Parses input lines. Two formats are supported, the output from the online CADD webtool and a VCF
- * of which only the first five columns are read.
- */
+/** Parses input lines. */
 @Component
 public class Parser {
   private static final Logger LOG = getLogger(Parser.class);
 
   private static final int CHROM_INDEX = 0;
   private static final int POS_INDEX = 1;
-  private static final int CADD_REF_INDEX = 2;
-  private static final int CADD_ALT_INDEX = 3;
-  private static final int CADD_RAW_SCORE_INDEX = 4;
-  private static final int CADD_PHRED_SCORE = 5;
   private static final int VCF_ID_INDEX = 2;
   private static final int VCF_REF_INDEX = 3;
   private static final int VCF_ALT_INDEX = 4;
-  private static final int CADD_NR_OF_COLS = 6;
   private static final int VCF_NR_OF_COLUMNS = 5;
-  public static final int MAX_LINES = 100000;
+  private static final int MAX_LINES = 100000;
 
-  private static Pattern CHROM_PATTERN =
+  private static final Pattern CHROM_PATTERN =
       Pattern.compile("([Cc][Hh][Rr])?(?<chrom>([1-9])|(1[0-9])|(2[0-2])|[xX]|[yY])");
-  private static Pattern REF_PATTERN = Pattern.compile("[ACTG]+");
-  private static Pattern ALT_PATTERN = Pattern.compile("[ACTG]+|\\.");
+  private static final Pattern REF_PATTERN = Pattern.compile("[ACTG]+");
+  private static final Pattern ALT_PATTERN = Pattern.compile("[ACTG]+|\\.");
 
   /**
    * Transforms gavin input file.
@@ -83,7 +73,8 @@ public class Parser {
    * @param errorSink {@link LineSink} to write unparseable lines to
    * @return Multiset counting the {@link LineType}s found in the stream
    */
-  Multiset<LineType> transformLines(Stream<String> lines, LineSink outputSink, LineSink errorSink) {
+  private Multiset<LineType> transformLines(
+      Stream<String> lines, LineSink outputSink, LineSink errorSink) {
     Multiset<LineType> lineTypes = EnumMultiset.create(LineType.class);
     writeVcfHeader(outputSink);
     lines
@@ -96,7 +87,7 @@ public class Parser {
   }
 
   private int countValidLines(Multiset<LineType> lineTypes) {
-    return lineTypes.count(VCF) + lineTypes.count(CADD);
+    return lineTypes.count(VCF);
   }
 
   private void writeVcfHeader(LineSink outputSink) {
@@ -116,7 +107,7 @@ public class Parser {
    * @param errorSink {@link LineSink} to write lines to that we cannot parse
    * @return LineType of the parsed line
    */
-  public LineType transformLine(
+  private LineType transformLine(
       String line, int numLines, int numValidLines, LineSink outputSink, LineSink errorSink) {
     if (numValidLines >= MAX_LINES) {
       return SKIPPED;
@@ -144,7 +135,7 @@ public class Parser {
    * @param line the line that may be a comment line
    * @return true if the line is a comment line
    */
-  public boolean isComment(String line) {
+  private boolean isComment(String line) {
     return line != null && line.startsWith("#");
   }
 
@@ -155,7 +146,7 @@ public class Parser {
    * @param line the line to parse
    * @return parsed Variant, or null if the line could not be parsed
    */
-  public Variant tryParseVariant(String line) {
+  private Variant tryParseVariant(String line) {
     try {
       return parseVariant(line);
     } catch (Exception ex) {
@@ -166,8 +157,7 @@ public class Parser {
 
   private Variant parseVariant(String line) {
     String[] columns = line.split("\t");
-    Variant caddVariant = parseCaddLine(columns);
-    return caddVariant != null ? caddVariant : parseVcfLine(columns);
+    return parseVcfLine(columns);
   }
 
   /**
@@ -178,36 +168,6 @@ public class Parser {
    */
   private boolean anyNull(Object... values) {
     return Arrays.stream(values).anyMatch(Objects::isNull);
-  }
-
-  /**
-   * Attempts to parse a line as a CADD output record.
-   *
-   * @param columns the columns of the line
-   * @return parsed {@link CaddVariant}, or null if parsing failed
-   */
-  private CaddVariant parseCaddLine(String[] columns) {
-    if (columns.length != CADD_NR_OF_COLS) {
-      return null;
-    }
-    String chrom = parseChrom(columns[CHROM_INDEX].trim());
-    Long pos = parsePos(columns[POS_INDEX].trim());
-
-    if (anyNull(chrom, pos)) {
-      return null;
-    }
-    try {
-      String ref = parseRef(columns[CADD_REF_INDEX].trim());
-      String alt = parseAlt(columns[CADD_ALT_INDEX].trim());
-      Double rawScore = parseDouble(columns[CADD_RAW_SCORE_INDEX].trim());
-      Double phred = parseDouble(columns[CADD_PHRED_SCORE].trim());
-      if (anyNull(ref, alt)) {
-        return null;
-      }
-      return CaddVariant.create(chrom, pos, ref, alt, rawScore, phred);
-    } catch (NumberFormatException e) {
-      return null;
-    }
   }
 
   /**
@@ -235,11 +195,7 @@ public class Parser {
     return VcfVariant.create(chrom, pos, id, ref, alt);
   }
 
-  private Double parseDouble(String doubleString) throws NumberFormatException {
-    return isEmpty(doubleString) ? null : Double.parseDouble(doubleString);
-  }
-
-  String parseChrom(String chrom) {
+  private String parseChrom(String chrom) {
     Matcher m = CHROM_PATTERN.matcher(chrom);
     return !m.matches() ? null : m.group("chrom").toUpperCase();
   }

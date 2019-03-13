@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
 
@@ -17,7 +18,7 @@ public class LineSink implements Consumer<String>, Closeable {
   private final File file;
   private BufferedWriter writer;
 
-  public LineSink(File file) {
+  LineSink(File file) {
     this.file = file;
   }
 
@@ -36,7 +37,8 @@ public class LineSink implements Consumer<String>, Closeable {
 
   private BufferedWriter createWriter(File file) throws IOException {
     LOG.debug("Creating LineSink for {}.", file.getAbsolutePath());
-    return new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
+    return new BufferedWriter(
+        new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8));
   }
 
   @Override

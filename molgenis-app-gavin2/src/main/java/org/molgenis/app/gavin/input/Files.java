@@ -12,8 +12,10 @@ import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
 /** Files methods, adapted to also work for {@link GZIPInputStream}. */
-public class Files {
-  public static Stream<String> getLines(Path path, Charset cs) throws IOException {
+class Files {
+  private Files() {}
+
+  static Stream<String> getLines(Path path, Charset cs) throws IOException {
     BufferedReader br = createBufferedReader(path, cs);
     try {
       return br.lines().onClose(asUncheckedRunnable(br));
