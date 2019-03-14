@@ -23,6 +23,7 @@ public class GavinRunMetadata extends SystemEntityType {
 
   public static final String ID = "id";
   public static final String KEY = "key";
+  public static final String INPUT_FILE_NAME = "inputFileName";
   public static final String FILTERED_INPUT_FILE = "filteredInputFile";
   public static final String DISCARDED_INPUT_FILE = "discardedInputFile";
   public static final String OUTPUT_FILE = "outputFile";
@@ -49,6 +50,7 @@ public class GavinRunMetadata extends SystemEntityType {
 
     addAttribute(ID, ROLE_ID).setLabel("Identifier").setAuto(true);
     addAttribute(KEY).setLabel("Key").setUnique(true);
+    addAttribute(INPUT_FILE_NAME).setNillable(false);
     addAttribute(FILTERED_INPUT_FILE)
         .setDataType(FILE)
         .setLabel("Filtered Input File")

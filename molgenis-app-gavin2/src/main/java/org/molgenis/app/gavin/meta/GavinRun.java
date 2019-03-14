@@ -1,8 +1,12 @@
 package org.molgenis.app.gavin.meta;
 
+import static org.molgenis.app.gavin.meta.GavinRunMetadata.DISCARDED_INPUT_FILE;
+import static org.molgenis.app.gavin.meta.GavinRunMetadata.FILTERED_INPUT_FILE;
 import static org.molgenis.app.gavin.meta.GavinRunMetadata.FINISHED_AT;
 import static org.molgenis.app.gavin.meta.GavinRunMetadata.ID;
+import static org.molgenis.app.gavin.meta.GavinRunMetadata.INPUT_FILE_NAME;
 import static org.molgenis.app.gavin.meta.GavinRunMetadata.KEY;
+import static org.molgenis.app.gavin.meta.GavinRunMetadata.OUTPUT_FILE;
 import static org.molgenis.app.gavin.meta.GavinRunMetadata.STARTED_AT;
 import static org.molgenis.app.gavin.meta.GavinRunMetadata.STATUS;
 import static org.molgenis.app.gavin.meta.GavinRunMetadata.SUBMITTED_AT;
@@ -41,28 +45,40 @@ public class GavinRun extends StaticEntity {
     return getString(KEY);
   }
 
+  public void setKey(String key) {
+    set(KEY, key);
+  }
+
+  public String getInputFileName() {
+    return getString(GavinRunMetadata.INPUT_FILE_NAME);
+  }
+
+  public void setInputFileName(String inputFileName) {
+    set(INPUT_FILE_NAME, inputFileName);
+  }
+
   public FileMeta getFilteredInputFile() {
-    return getEntity(GavinRunMetadata.FILTERED_INPUT_FILE, FileMeta.class);
+    return getEntity(FILTERED_INPUT_FILE, FileMeta.class);
   }
 
   public void setFilteredInputFile(FileMeta filteredInputFile) {
-    set(GavinRunMetadata.FILTERED_INPUT_FILE, filteredInputFile);
+    set(FILTERED_INPUT_FILE, filteredInputFile);
   }
 
   public FileMeta getDiscardedInputFile() {
-    return getEntity(GavinRunMetadata.DISCARDED_INPUT_FILE, FileMeta.class);
+    return getEntity(DISCARDED_INPUT_FILE, FileMeta.class);
   }
 
   public void setDiscardedInputFile(FileMeta discardedInputFile) {
-    set(GavinRunMetadata.DISCARDED_INPUT_FILE, discardedInputFile);
+    set(DISCARDED_INPUT_FILE, discardedInputFile);
   }
 
   public FileMeta getOutputFile() {
-    return getEntity(GavinRunMetadata.OUTPUT_FILE, FileMeta.class);
+    return getEntity(OUTPUT_FILE, FileMeta.class);
   }
 
   public void setOutputFile(FileMeta outputFile) {
-    set(GavinRunMetadata.OUTPUT_FILE, outputFile);
+    set(OUTPUT_FILE, outputFile);
   }
 
   public String getLog() {
