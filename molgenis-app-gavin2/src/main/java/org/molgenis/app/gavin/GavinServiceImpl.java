@@ -5,6 +5,7 @@ import static org.molgenis.app.gavin.meta.GavinRunMetadata.GAVIN_RUN;
 import static org.molgenis.data.file.model.FileMetaMetaData.FILE_META;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -65,8 +66,7 @@ public class GavinServiceImpl implements GavinService {
 
   @Override
   @Transactional
-  public String uploadVcfFile(HttpServletRequest httpServletRequest)
-      throws IOException, ServletException {
+  public String upload(HttpServletRequest httpServletRequest) throws IOException, ServletException {
     Part part = httpServletRequest.getPart("file");
 
     FileMeta inputFile = storeUploadedFile(part);
@@ -87,7 +87,9 @@ public class GavinServiceImpl implements GavinService {
         fileStore.getFile(filteredInput.getId()),
         fileStore.getFile(discardedInput.getId()));
 
-    filteredInput.setSize(fileStore.getFile(filteredInput.getId()).length());
+    File filteredInputFile = fileStore.getFile(filteredInput.getId());
+
+    filteredInput.setSize(filteredInputFile.length());
     discardedInput.setSize(fileStore.getFile(discardedInput.getId()).length());
     dataService.update(FILE_META, Stream.of(filteredInput, discardedInput));
 

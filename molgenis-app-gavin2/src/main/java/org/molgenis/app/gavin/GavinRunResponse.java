@@ -15,6 +15,8 @@ import org.molgenis.util.AutoGson;
 public abstract class GavinRunResponse {
   public abstract String getId();
 
+  public abstract String getUploadedFileName();
+
   public abstract String getFilteredInputFileUri();
 
   public abstract String getDiscardedInputFileUri();
@@ -43,6 +45,7 @@ public abstract class GavinRunResponse {
 
     return new AutoValue_GavinRunResponse(
         gavinRun.getId(),
+        gavinRun.getInputFileName(),
         format("%s/run/%s/download/input", GAVIN, gavinRun.getId()),
         format("%s/run/%s/download/error", GAVIN, gavinRun.getId()),
         outputUrl,
