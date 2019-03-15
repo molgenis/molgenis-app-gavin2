@@ -125,6 +125,16 @@ public class GavinServiceImpl implements GavinService {
     dataService.update(GAVIN_RUN, gavinRun);
   }
 
+  @Override
+  public void fail(String id, String log) {
+    GavinRun gavinRun = get(id);
+
+    gavinRun.setLog(gavinRun.getLog() + log);
+    gavinRun.setFinishedAt(Instant.now());
+    gavinRun.setStatus(Status.FAILED);
+    dataService.update(GAVIN_RUN, gavinRun);
+  }
+
   private FileMeta createEmptyFile(String fileName) {
     String id = idGenerator.generateId();
     try (InputStream inputStream = new ByteArrayInputStream("".getBytes())) {

@@ -74,6 +74,12 @@ public class GavinController {
     return new ResponseEntity(HttpStatus.OK);
   }
 
+  @PostMapping(value = "/run/{id}/fail")
+  public ResponseEntity start(@PathVariable String id, @RequestParam String log) {
+    gavinService.fail(id, log);
+    return new ResponseEntity(HttpStatus.OK);
+  }
+
   @RunAsSystem
   @GetMapping(value = "/run/{id}/download/output", produces = APPLICATION_OCTET_STREAM_VALUE)
   public FileSystemResource downloadOutputFile(
