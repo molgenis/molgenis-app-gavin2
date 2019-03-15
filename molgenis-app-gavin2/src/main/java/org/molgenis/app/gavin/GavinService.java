@@ -8,5 +8,7 @@ import org.molgenis.app.gavin.meta.GavinRun;
 public interface GavinService {
   String uploadVcfFile(HttpServletRequest httpServletRequest) throws IOException, ServletException;
 
-  GavinRun get(String key);
+  GavinRun get(String id);
+
+  void start(String id);
 }

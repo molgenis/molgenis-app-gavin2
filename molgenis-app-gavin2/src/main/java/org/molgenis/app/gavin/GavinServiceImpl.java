@@ -7,6 +7,7 @@ import static org.molgenis.data.file.model.FileMetaMetaData.FILE_META;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.time.Instant;
 import java.util.stream.Stream;
 import javax.servlet.ServletException;
@@ -15,13 +16,12 @@ import javax.servlet.http.Part;
 import org.molgenis.app.gavin.input.Parser;
 import org.molgenis.app.gavin.meta.GavinRun;
 import org.molgenis.app.gavin.meta.GavinRunFactory;
+import org.molgenis.core.ui.file.FileDownloadController;
 import org.molgenis.data.DataService;
-import org.molgenis.data.MolgenisDataException;
 import org.molgenis.data.UnknownEntityException;
 import org.molgenis.data.file.FileStore;
 import org.molgenis.data.file.model.FileMeta;
 import org.molgenis.data.file.model.FileMetaFactory;
-import org.molgenis.data.file.util.FileDownloadControllerUtils;
 import org.molgenis.data.populate.IdGenerator;
 import org.molgenis.data.populate.IdGenerator.Strategy;
 import org.molgenis.data.rest.service.ServletUriComponentsBuilderFactory;
@@ -103,12 +103,20 @@ public class GavinServiceImpl implements GavinService {
     return gavinRun;
   }
 
+  @Override
+  public void start(String id) {
+    GavinRun gavinRun = get(id);
+    gavinRun.setStartedAt(Instant.now());
+    gavinRun.setStatus(Status.RUNNING);
+    dataService.update(GAVIN_RUN, gavinRun);
+  }
+
   private FileMeta createEmptyFile(String fileName) {
     String id = idGenerator.generateId();
     try (InputStream inputStream = new ByteArrayInputStream("".getBytes())) {
       fileStore.store(inputStream, id);
     } catch (IOException e) {
-      throw new MolgenisDataException(e);
+      throw new UncheckedIOException(e);
     }
 
     return createFileMeta(id, fileName, "text/tsv");
@@ -119,7 +127,7 @@ public class GavinServiceImpl implements GavinService {
     try (InputStream inputStream = part.getInputStream()) {
       fileStore.store(inputStream, id);
     } catch (IOException e) {
-      throw new MolgenisDataException(e);
+      throw new UncheckedIOException(e);
     }
 
     return createFileMeta(id, part.getSubmittedFileName(), part.getContentType());
@@ -134,7 +142,7 @@ public class GavinServiceImpl implements GavinService {
         servletUriComponentsBuilderFactory.fromCurrentRequest();
     UriComponents downloadUri =
         currentRequest
-            .replacePath(FileDownloadControllerUtils.URI + '/' + id)
+            .replacePath(FileDownloadController.URI + '/' + id)
             .replaceQuery(null)
             .build();
     fileEntity.setUrl(downloadUri.toUriString());

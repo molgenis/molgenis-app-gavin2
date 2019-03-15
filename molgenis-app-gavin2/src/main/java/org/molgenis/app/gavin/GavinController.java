@@ -17,6 +17,7 @@ import org.molgenis.security.core.runas.RunAsSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -54,6 +55,12 @@ public class GavinController {
   @GetMapping(value = "/run/{id}")
   public GavinRunResponse get(@PathVariable String id) {
     return GavinRunResponse.create(gavinService.get(id));
+  }
+
+  @PostMapping(value = "/run/{id}/start")
+  public ResponseEntity start(@PathVariable String id) {
+    gavinService.start(id);
+    return new ResponseEntity(HttpStatus.OK);
   }
 
   @RunAsSystem
