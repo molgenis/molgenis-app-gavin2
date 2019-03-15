@@ -47,8 +47,8 @@ public class GavinController {
   public ResponseEntity<String> upload(
       @RequestParam(value = "file") MultipartFile inputFile, HttpServletRequest httpServletRequest)
       throws IOException, ServletException {
-    String key = gavinService.uploadVcfFile(httpServletRequest);
-    return ResponseEntity.created(java.net.URI.create(key)).body(key);
+    String id = gavinService.uploadVcfFile(httpServletRequest);
+    return ResponseEntity.created(java.net.URI.create(id)).body(id);
   }
 
   @RunAsSystem
@@ -60,6 +60,17 @@ public class GavinController {
   @PostMapping(value = "/run/{id}/start")
   public ResponseEntity start(@PathVariable String id) {
     gavinService.start(id);
+    return new ResponseEntity(HttpStatus.OK);
+  }
+
+  @PostMapping(value = "/run/{id}/finish")
+  public ResponseEntity finish(
+      @PathVariable String id,
+      @RequestParam MultipartFile outputFile,
+      @RequestParam String log,
+      HttpServletRequest httpServletRequest)
+      throws IOException, ServletException {
+    gavinService.finish(id, log, httpServletRequest);
     return new ResponseEntity(HttpStatus.OK);
   }
 

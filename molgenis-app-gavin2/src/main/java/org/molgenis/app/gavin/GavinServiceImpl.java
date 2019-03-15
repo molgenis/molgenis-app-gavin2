@@ -69,7 +69,7 @@ public class GavinServiceImpl implements GavinService {
       throws IOException, ServletException {
     Part part = httpServletRequest.getPart("file");
 
-    FileMeta inputFile = storeInputFile(part);
+    FileMeta inputFile = storeUploadedFile(part);
     FileMeta filteredInput = createEmptyFile("filteredInput.vcf");
     FileMeta discardedInput = createEmptyFile("discardedInput.txt");
 
@@ -111,6 +111,20 @@ public class GavinServiceImpl implements GavinService {
     dataService.update(GAVIN_RUN, gavinRun);
   }
 
+  @Override
+  public void finish(String id, String log, HttpServletRequest httpServletRequest)
+      throws IOException, ServletException {
+    GavinRun gavinRun = get(id);
+
+    FileMeta outputFile = storeUploadedFile(httpServletRequest.getPart("outputFile"));
+
+    gavinRun.setOutputFile(outputFile);
+    gavinRun.setLog(gavinRun.getLog() + log);
+    gavinRun.setFinishedAt(Instant.now());
+    gavinRun.setStatus(Status.SUCCESS);
+    dataService.update(GAVIN_RUN, gavinRun);
+  }
+
   private FileMeta createEmptyFile(String fileName) {
     String id = idGenerator.generateId();
     try (InputStream inputStream = new ByteArrayInputStream("".getBytes())) {
@@ -122,7 +136,7 @@ public class GavinServiceImpl implements GavinService {
     return createFileMeta(id, fileName, "text/tsv");
   }
 
-  private FileMeta storeInputFile(Part part) {
+  private FileMeta storeUploadedFile(Part part) {
     String id = idGenerator.generateId();
     try (InputStream inputStream = part.getInputStream()) {
       fileStore.store(inputStream, id);

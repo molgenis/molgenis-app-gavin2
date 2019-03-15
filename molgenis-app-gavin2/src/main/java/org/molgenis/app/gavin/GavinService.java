@@ -11,4 +11,7 @@ public interface GavinService {
   GavinRun get(String id);
 
   void start(String id);
+
+  void finish(String id, String log, HttpServletRequest httpServletRequest)
+      throws IOException, ServletException;
 }

@@ -22,15 +22,15 @@ public class GavinRunMetadata extends SystemEntityType {
       GavinPackage.PACKAGE_GAVIN + PACKAGE_SEPARATOR + SIMPLE_NAME;
 
   public static final String ID = "id";
-  public static final String INPUT_FILE_NAME = "inputFileName";
-  public static final String FILTERED_INPUT_FILE = "filteredInputFile";
-  public static final String DISCARDED_INPUT_FILE = "discardedInputFile";
-  public static final String OUTPUT_FILE = "outputFile";
-  public static final String LOG = "log";
-  public static final String STATUS = "status";
-  public static final String SUBMITTED_AT = "submittedAt";
-  public static final String STARTED_AT = "startedAt";
-  public static final String FINISHED_AT = "finishedAt";
+  static final String INPUT_FILE_NAME = "inputFileName";
+  static final String FILTERED_INPUT_FILE = "filteredInputFile";
+  static final String DISCARDED_INPUT_FILE = "discardedInputFile";
+  static final String OUTPUT_FILE = "outputFile";
+  static final String LOG = "log";
+  static final String STATUS = "status";
+  static final String SUBMITTED_AT = "submittedAt";
+  static final String STARTED_AT = "startedAt";
+  static final String FINISHED_AT = "finishedAt";
 
   private final GavinPackage gavinPackage;
   private final FileMetaMetaData fileMetaMetadata;
@@ -61,7 +61,11 @@ public class GavinRunMetadata extends SystemEntityType {
         .setDataType(FILE)
         .setLabel("Output File")
         .setRefEntity(fileMetaMetadata);
-    addAttribute(LOG).setDataType(AttributeType.TEXT).setLabel("Log");
+    addAttribute(LOG)
+        .setDataType(AttributeType.TEXT)
+        .setLabel("Log")
+        .setNillable(false)
+        .setDefaultValue("");
     addAttribute(SUBMITTED_AT).setDataType(DATE_TIME).setLabel("Submitted at").setNillable(false);
     addAttribute(STARTED_AT).setDataType(DATE_TIME).setLabel("Started at");
     addAttribute(FINISHED_AT).setDataType(DATE_TIME).setLabel("Finished at");
