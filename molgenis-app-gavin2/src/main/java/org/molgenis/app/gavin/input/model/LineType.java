@@ -4,8 +4,6 @@ package org.molgenis.app.gavin.input.model;
 public enum LineType {
   COMMENT,
   VCF,
-  CADD,
   ERROR,
-  SKIPPED,
-  INDEL_NOCADD
+  SKIPPED
 }

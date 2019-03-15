@@ -5,7 +5,6 @@ import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.molgenis.app.gavin.input.Files.getLines;
 import static org.molgenis.app.gavin.input.model.LineType.COMMENT;
 import static org.molgenis.app.gavin.input.model.LineType.ERROR;
-import static org.molgenis.app.gavin.input.model.LineType.INDEL_NOCADD;
 import static org.molgenis.app.gavin.input.model.LineType.SKIPPED;
 import static org.molgenis.app.gavin.input.model.LineType.VCF;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -73,8 +72,7 @@ public class Parser {
    * @param errorSink {@link LineSink} to write unparseable lines to
    * @return Multiset counting the {@link LineType}s found in the stream
    */
-  private Multiset<LineType> transformLines(
-      Stream<String> lines, LineSink outputSink, LineSink errorSink) {
+  Multiset<LineType> transformLines(Stream<String> lines, LineSink outputSink, LineSink errorSink) {
     Multiset<LineType> lineTypes = EnumMultiset.create(LineType.class);
     writeVcfHeader(outputSink);
     lines
@@ -107,7 +105,7 @@ public class Parser {
    * @param errorSink {@link LineSink} to write lines to that we cannot parse
    * @return LineType of the parsed line
    */
-  private LineType transformLine(
+  LineType transformLine(
       String line, int numLines, int numValidLines, LineSink outputSink, LineSink errorSink) {
     if (numValidLines >= MAX_LINES) {
       return SKIPPED;
@@ -120,12 +118,7 @@ public class Parser {
       errorSink.accept(format("Line %d:\t%s", numLines + 1, line));
       return ERROR;
     }
-    if (variant.getLineType() == INDEL_NOCADD) {
-      // Don't process indels without cadd annotation
-      errorSink.accept(format("Line %d:\t%s", numLines + 1, line));
-    } else {
-      outputSink.accept(variant.toString());
-    }
+    outputSink.accept(variant.toString());
     return variant.getLineType();
   }
 
@@ -146,7 +139,7 @@ public class Parser {
    * @param line the line to parse
    * @return parsed Variant, or null if the line could not be parsed
    */
-  private Variant tryParseVariant(String line) {
+  Variant tryParseVariant(String line) {
     try {
       return parseVariant(line);
     } catch (Exception ex) {
@@ -195,7 +188,7 @@ public class Parser {
     return VcfVariant.create(chrom, pos, id, ref, alt);
   }
 
-  private String parseChrom(String chrom) {
+  String parseChrom(String chrom) {
     Matcher m = CHROM_PATTERN.matcher(chrom);
     return !m.matches() ? null : m.group("chrom").toUpperCase();
   }
