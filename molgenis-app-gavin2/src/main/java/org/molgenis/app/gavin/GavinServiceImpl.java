@@ -4,8 +4,8 @@ import static java.util.Objects.requireNonNull;
 import static org.molgenis.app.gavin.meta.GavinRunMetadata.GAVIN_RUN;
 import static org.molgenis.data.file.model.FileMetaMetaData.FILE_META;
 
+import com.google.common.collect.Multiset;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -15,6 +15,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.Part;
 import org.molgenis.app.gavin.input.Parser;
+import org.molgenis.app.gavin.input.model.LineType;
 import org.molgenis.app.gavin.meta.GavinRun;
 import org.molgenis.app.gavin.meta.GavinRunFactory;
 import org.molgenis.core.ui.file.FileDownloadController;
@@ -82,16 +83,19 @@ public class GavinServiceImpl implements GavinService {
     gavinRun.setStatus(Status.PENDING);
     dataService.add(GAVIN_RUN, gavinRun);
 
-    parser.tryTransform(
-        fileStore.getFile(inputFile.getId()),
-        fileStore.getFile(filteredInput.getId()),
-        fileStore.getFile(discardedInput.getId()));
+    Multiset<LineType> parsedLineTypes =
+        parser.tryTransform(
+            fileStore.getFile(inputFile.getId()),
+            fileStore.getFile(filteredInput.getId()),
+            fileStore.getFile(discardedInput.getId()));
 
-    File filteredInputFile = fileStore.getFile(filteredInput.getId());
-
-    filteredInput.setSize(filteredInputFile.length());
+    filteredInput.setSize(fileStore.getFile(filteredInput.getId()).length());
     discardedInput.setSize(fileStore.getFile(discardedInput.getId()).length());
     dataService.update(FILE_META, Stream.of(filteredInput, discardedInput));
+
+    if (parsedLineTypes.count(LineType.VCF) == 0) {
+      fail(gavinRun.getId(), "No usable lines were found in the uploaded file");
+    }
 
     return gavinRun.getId();
   }
