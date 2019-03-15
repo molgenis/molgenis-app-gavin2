@@ -5,7 +5,6 @@ import static org.molgenis.app.gavin.meta.GavinRunMetadata.FILTERED_INPUT_FILE;
 import static org.molgenis.app.gavin.meta.GavinRunMetadata.FINISHED_AT;
 import static org.molgenis.app.gavin.meta.GavinRunMetadata.ID;
 import static org.molgenis.app.gavin.meta.GavinRunMetadata.INPUT_FILE_NAME;
-import static org.molgenis.app.gavin.meta.GavinRunMetadata.KEY;
 import static org.molgenis.app.gavin.meta.GavinRunMetadata.OUTPUT_FILE;
 import static org.molgenis.app.gavin.meta.GavinRunMetadata.STARTED_AT;
 import static org.molgenis.app.gavin.meta.GavinRunMetadata.STATUS;
@@ -39,14 +38,6 @@ public class GavinRun extends StaticEntity {
 
   public String getId() {
     return getString(ID);
-  }
-
-  public String getKey() {
-    return getString(KEY);
-  }
-
-  public void setKey(String key) {
-    set(KEY, key);
   }
 
   public String getInputFileName() {

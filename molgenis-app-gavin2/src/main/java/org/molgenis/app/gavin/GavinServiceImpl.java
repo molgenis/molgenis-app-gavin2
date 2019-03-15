@@ -17,6 +17,7 @@ import org.molgenis.app.gavin.meta.GavinRun;
 import org.molgenis.app.gavin.meta.GavinRunFactory;
 import org.molgenis.data.DataService;
 import org.molgenis.data.MolgenisDataException;
+import org.molgenis.data.UnknownEntityException;
 import org.molgenis.data.file.FileStore;
 import org.molgenis.data.file.model.FileMeta;
 import org.molgenis.data.file.model.FileMetaFactory;
@@ -25,7 +26,6 @@ import org.molgenis.data.populate.IdGenerator;
 import org.molgenis.data.populate.IdGenerator.Strategy;
 import org.molgenis.data.rest.service.ServletUriComponentsBuilderFactory;
 import org.molgenis.jobs.model.JobExecution.Status;
-import org.molgenis.security.core.runas.RunAsSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -65,7 +65,6 @@ public class GavinServiceImpl implements GavinService {
 
   @Override
   @Transactional
-  @RunAsSystem
   public String uploadVcfFile(HttpServletRequest httpServletRequest)
       throws IOException, ServletException {
     Part part = httpServletRequest.getPart("file");
@@ -75,7 +74,7 @@ public class GavinServiceImpl implements GavinService {
     FileMeta discardedInput = createEmptyFile("discardedInput.txt");
 
     GavinRun gavinRun = gavinRunFactory.create();
-    gavinRun.setKey(idGenerator.generateId(Strategy.LONG_SECURE_RANDOM));
+    gavinRun.setId(idGenerator.generateId(Strategy.LONG_SECURE_RANDOM));
     gavinRun.setInputFileName(part.getSubmittedFileName());
     gavinRun.setFilteredInputFile(filteredInput);
     gavinRun.setDiscardedInputFile(discardedInput);
@@ -92,7 +91,16 @@ public class GavinServiceImpl implements GavinService {
     discardedInput.setSize(fileStore.getFile(discardedInput.getId()).length());
     dataService.update(FILE_META, Stream.of(filteredInput, discardedInput));
 
-    return gavinRun.getKey();
+    return gavinRun.getId();
+  }
+
+  @Override
+  public GavinRun get(String id) {
+    GavinRun gavinRun = dataService.findOneById(GAVIN_RUN, id, GavinRun.class);
+    if (gavinRun == null) {
+      throw new UnknownEntityException(GAVIN_RUN, id);
+    }
+    return gavinRun;
   }
 
   private FileMeta createEmptyFile(String fileName) {

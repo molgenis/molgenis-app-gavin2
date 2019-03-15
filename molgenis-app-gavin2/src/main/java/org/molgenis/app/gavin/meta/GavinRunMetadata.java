@@ -22,7 +22,6 @@ public class GavinRunMetadata extends SystemEntityType {
       GavinPackage.PACKAGE_GAVIN + PACKAGE_SEPARATOR + SIMPLE_NAME;
 
   public static final String ID = "id";
-  public static final String KEY = "key";
   public static final String INPUT_FILE_NAME = "inputFileName";
   public static final String FILTERED_INPUT_FILE = "filteredInputFile";
   public static final String DISCARDED_INPUT_FILE = "discardedInputFile";
@@ -48,8 +47,7 @@ public class GavinRunMetadata extends SystemEntityType {
     setLabel("GAVIN Run");
     setDescription("Stores input/output data and status information of GAVIN runs.");
 
-    addAttribute(ID, ROLE_ID).setLabel("Identifier").setAuto(true);
-    addAttribute(KEY).setLabel("Key").setUnique(true);
+    addAttribute(ID, ROLE_ID).setLabel("Identifier");
     addAttribute(INPUT_FILE_NAME).setNillable(false);
     addAttribute(FILTERED_INPUT_FILE)
         .setDataType(FILE)
