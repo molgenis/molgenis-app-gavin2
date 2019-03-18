@@ -107,6 +107,7 @@ public class GavinServiceImplTest extends AbstractMockitoTest {
     gavinService.upload(httpServletRequest);
 
     verify(dataService).add(GAVIN_RUN, gavinRun);
+    verify(dataService).delete(FILE_META, inputFileMeta);
   }
 
   @Test

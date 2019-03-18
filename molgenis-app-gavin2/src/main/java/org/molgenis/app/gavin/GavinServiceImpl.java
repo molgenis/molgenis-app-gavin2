@@ -81,6 +81,8 @@ public class GavinServiceImpl implements GavinService {
       fail(gavinRun.getId(), "No usable lines were found in the uploaded file");
     }
 
+    dataService.delete(FILE_META, inputFile);
+
     return gavinRun.getId();
   }
 
