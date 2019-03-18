@@ -51,7 +51,7 @@ public class GavinController {
 
   private static final Duration RUN_EXPIRATION_TIME = Duration.ofDays(1);
 
-  public GavinController(GavinService gavinService, FileStore fileStore, DataService dataService) {
+  GavinController(GavinService gavinService, FileStore fileStore, DataService dataService) {
     this.gavinService = requireNonNull(gavinService);
     this.fileStore = requireNonNull(fileStore);
     this.dataService = requireNonNull(dataService);
