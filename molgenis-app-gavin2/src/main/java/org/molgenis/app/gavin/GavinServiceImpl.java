@@ -66,8 +66,13 @@ public class GavinServiceImpl implements GavinService {
 
   @Override
   @Transactional
-  public String upload(HttpServletRequest httpServletRequest) throws IOException, ServletException {
-    Part part = httpServletRequest.getPart("file");
+  public String upload(HttpServletRequest httpServletRequest) throws IOException {
+    Part part;
+    try {
+      part = httpServletRequest.getPart("file");
+    } catch (ServletException e) {
+      throw new IllegalStateException("Request is not of type multipart/form-data");
+    }
 
     FileMeta inputFile = storeUploadedFile(part);
     FileMeta filteredInput = createEmptyFile("filteredInput.vcf");
@@ -137,11 +142,16 @@ public class GavinServiceImpl implements GavinService {
   @Override
   @Transactional
   public void finish(String id, String log, HttpServletRequest httpServletRequest)
-      throws IOException, ServletException {
+      throws IOException {
     LOG.info("GavinRun has finished: '{}'", id);
 
     GavinRun gavinRun = get(id);
-    FileMeta outputFile = storeUploadedFile(httpServletRequest.getPart("outputFile"));
+    FileMeta outputFile;
+    try {
+      outputFile = storeUploadedFile(httpServletRequest.getPart("outputFile"));
+    } catch (ServletException e) {
+      throw new IllegalStateException("Request is not of type multipart/form-data");
+    }
 
     gavinRun.setOutputFile(outputFile);
     gavinRun.setLog(gavinRun.getLog() + log);
