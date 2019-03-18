@@ -47,7 +47,7 @@ public class GavinServiceImpl implements GavinService {
   private final GavinRunFactory gavinRunFactory;
   private final Parser parser;
 
-  public GavinServiceImpl(
+  GavinServiceImpl(
       IdGenerator idGenerator,
       FileStore fileStore,
       FileMetaFactory fileMetaFactory,
