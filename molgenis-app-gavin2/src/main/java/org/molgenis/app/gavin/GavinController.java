@@ -129,7 +129,7 @@ public class GavinController {
     File file = fileStore.getFile(fileMeta.getId());
 
     response.setHeader(
-        "Content-Disposition", format("inline; filename=\"%s-gavin.vcf\"", fileMeta.getFilename()));
+        "Content-Disposition", format("inline; filename=\"%s\"", fileMeta.getFilename()));
     return new FileSystemResource(file);
   }
 

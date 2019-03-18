@@ -36,7 +36,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponents;
 
 @Component
-@SuppressWarnings({"squid:S1854", "squid:S1481", "squid:S3958"}) // TODO REMOVE ME
 public class GavinServiceImpl implements GavinService {
 
   private static final Logger LOG = LoggerFactory.getLogger(GavinServiceImpl.class);
@@ -74,15 +73,18 @@ public class GavinServiceImpl implements GavinService {
     FileMeta filteredInput = createEmptyFile("filteredInput.vcf");
     FileMeta discardedInput = createEmptyFile("discardedInput.txt");
 
-    GavinRun gavinRun = gavinRunFactory.create();
-    gavinRun.setId(idGenerator.generateId(Strategy.LONG_SECURE_RANDOM));
-    gavinRun.setInputFileName(part.getSubmittedFileName());
-    gavinRun.setFilteredInputFile(filteredInput);
-    gavinRun.setDiscardedInputFile(discardedInput);
-    gavinRun.setSubmittedAt(Instant.now());
-    gavinRun.setStatus(Status.PENDING);
-    dataService.add(GAVIN_RUN, gavinRun);
+    GavinRun gavinRun = createGavinRun(part, filteredInput, discardedInput);
+    Multiset<LineType> parsedLineTypes = parseInputFile(inputFile, filteredInput, discardedInput);
 
+    if (parsedLineTypes.count(LineType.VCF) == 0) {
+      fail(gavinRun.getId(), "No usable lines were found in the uploaded file");
+    }
+
+    return gavinRun.getId();
+  }
+
+  private Multiset<LineType> parseInputFile(
+      FileMeta inputFile, FileMeta filteredInput, FileMeta discardedInput) throws IOException {
     Multiset<LineType> parsedLineTypes =
         parser.tryTransform(
             fileStore.getFile(inputFile.getId()),
@@ -92,12 +94,19 @@ public class GavinServiceImpl implements GavinService {
     filteredInput.setSize(fileStore.getFile(filteredInput.getId()).length());
     discardedInput.setSize(fileStore.getFile(discardedInput.getId()).length());
     dataService.update(FILE_META, Stream.of(filteredInput, discardedInput));
+    return parsedLineTypes;
+  }
 
-    if (parsedLineTypes.count(LineType.VCF) == 0) {
-      fail(gavinRun.getId(), "No usable lines were found in the uploaded file");
-    }
-
-    return gavinRun.getId();
+  private GavinRun createGavinRun(Part part, FileMeta filteredInput, FileMeta discardedInput) {
+    GavinRun gavinRun = gavinRunFactory.create();
+    gavinRun.setId(idGenerator.generateId(Strategy.LONG_SECURE_RANDOM));
+    gavinRun.setInputFileName(part.getSubmittedFileName());
+    gavinRun.setFilteredInputFile(filteredInput);
+    gavinRun.setDiscardedInputFile(discardedInput);
+    gavinRun.setSubmittedAt(Instant.now());
+    gavinRun.setStatus(Status.PENDING);
+    dataService.add(GAVIN_RUN, gavinRun);
+    return gavinRun;
   }
 
   @Override
@@ -110,6 +119,7 @@ public class GavinServiceImpl implements GavinService {
   }
 
   @Override
+  @Transactional
   public void start(String id) {
     GavinRun gavinRun = get(id);
     gavinRun.setStartedAt(Instant.now());
@@ -118,10 +128,10 @@ public class GavinServiceImpl implements GavinService {
   }
 
   @Override
+  @Transactional
   public void finish(String id, String log, HttpServletRequest httpServletRequest)
       throws IOException, ServletException {
     GavinRun gavinRun = get(id);
-
     FileMeta outputFile = storeUploadedFile(httpServletRequest.getPart("outputFile"));
 
     gavinRun.setOutputFile(outputFile);
@@ -132,9 +142,9 @@ public class GavinServiceImpl implements GavinService {
   }
 
   @Override
+  @Transactional
   public void fail(String id, String log) {
     GavinRun gavinRun = get(id);
-
     gavinRun.setLog(gavinRun.getLog() + log);
     gavinRun.setFinishedAt(Instant.now());
     gavinRun.setStatus(Status.FAILED);
