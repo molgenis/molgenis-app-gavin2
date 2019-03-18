@@ -74,8 +74,9 @@ public class GavinServiceImpl implements GavinService {
     FileMeta discardedInput = createEmptyFile("discardedInput.txt");
 
     GavinRun gavinRun = createGavinRun(part, filteredInput, discardedInput);
-    Multiset<LineType> parsedLineTypes = parseInputFile(inputFile, filteredInput, discardedInput);
+    LOG.info("GavinRun created: '{}'", gavinRun.getId());
 
+    Multiset<LineType> parsedLineTypes = parseInputFile(inputFile, filteredInput, discardedInput);
     if (parsedLineTypes.count(LineType.VCF) == 0) {
       fail(gavinRun.getId(), "No usable lines were found in the uploaded file");
     }
@@ -111,6 +112,8 @@ public class GavinServiceImpl implements GavinService {
 
   @Override
   public GavinRun get(String id) {
+    LOG.debug("Getting GavinRun '{}'", id);
+
     GavinRun gavinRun = dataService.findOneById(GAVIN_RUN, id, GavinRun.class);
     if (gavinRun == null) {
       throw new UnknownEntityException(GAVIN_RUN, id);
@@ -121,6 +124,8 @@ public class GavinServiceImpl implements GavinService {
   @Override
   @Transactional
   public void start(String id) {
+    LOG.info("GavinRun has started: '{}'", id);
+
     GavinRun gavinRun = get(id);
     gavinRun.setStartedAt(Instant.now());
     gavinRun.setStatus(Status.RUNNING);
@@ -131,6 +136,8 @@ public class GavinServiceImpl implements GavinService {
   @Transactional
   public void finish(String id, String log, HttpServletRequest httpServletRequest)
       throws IOException, ServletException {
+    LOG.info("GavinRun has finished: '{}'", id);
+
     GavinRun gavinRun = get(id);
     FileMeta outputFile = storeUploadedFile(httpServletRequest.getPart("outputFile"));
 
@@ -144,6 +151,8 @@ public class GavinServiceImpl implements GavinService {
   @Override
   @Transactional
   public void fail(String id, String log) {
+    LOG.info("GavinRun failed: '{}'", id);
+
     GavinRun gavinRun = get(id);
     gavinRun.setLog(gavinRun.getLog() + log);
     gavinRun.setFinishedAt(Instant.now());
