@@ -19,7 +19,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.molgenis.app.gavin.meta.GavinRun;
 import org.molgenis.data.DataService;
-import org.molgenis.data.MolgenisDataException;
 import org.molgenis.data.file.FileStore;
 import org.molgenis.data.file.model.FileMeta;
 import org.molgenis.jobs.model.JobExecution.Status;
@@ -121,15 +120,13 @@ public class GavinController {
 
   private FileSystemResource prepareDownload(HttpServletResponse response, FileMeta fileMeta) {
     if (fileMeta == null) {
-      throw new MolgenisDataException(
-          "No result file found for this job. The run might not have finished yet or it might"
-              + "be older than 24 hours.");
+      response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+      return null;
     }
 
     File file = fileStore.getFile(fileMeta.getId());
-
     response.setHeader(
-        "Content-Disposition", format("inline; filename=\"%s\"", fileMeta.getFilename()));
+        "Content-Disposition", format("attachment; filename=\"%s\"", fileMeta.getFilename()));
     return new FileSystemResource(file);
   }
 
