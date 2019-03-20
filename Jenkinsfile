@@ -6,7 +6,7 @@ pipeline {
     }
     environment {
         LOCAL_REPOSITORY = "${LOCAL_REGISTRY}/molgenis/molgenis-app-gavin2"
-        CHART_VERSION = '1.2.3'
+        CHART_VERSION = '0.12.0'
         TIMESTAMP = sh(returnStdout: true, script: "date -u +'%F_%H-%M-%S'").trim()
     }
     stages {
