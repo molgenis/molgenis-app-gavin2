@@ -14,6 +14,7 @@ import static org.testng.Assert.assertEquals;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.stream.Stream;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -35,6 +36,8 @@ import org.testng.annotations.Test;
 
 public class GavinControllerTest extends AbstractMockitoTest {
 
+  private static final String FILE_ID = "fileId";
+  private static final String FILE_NAME = "fileName";
   private GavinController controller;
 
   @Mock private GavinService gavinService;
@@ -77,40 +80,37 @@ public class GavinControllerTest extends AbstractMockitoTest {
 
   @Test
   public void testStart() {
-    ResponseEntity response = controller.start("id");
+    controller.start("id");
 
     verify(gavinService).start("id");
-    assertEquals(response.getStatusCode(), HttpStatus.OK);
   }
 
   @Test
-  public void testFinish() throws IOException, ServletException {
+  public void testFinish() throws IOException {
     MultipartFile outputFile = mock(MultipartFile.class);
     HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
 
-    ResponseEntity response =
-        controller.finish("id", outputFile, "All went well.", httpServletRequest);
+    controller.finish("id", outputFile, "All went well.", httpServletRequest);
 
     verify(gavinService).finish("id", "All went well.", httpServletRequest);
-    assertEquals(response.getStatusCode(), HttpStatus.OK);
   }
 
   @Test
   public void testDownloadOutputFile() {
     GavinRun gavinRun = mock(GavinRun.class);
     FileMeta fileMeta = mock(FileMeta.class);
-    when(gavinRun.getOutputFile()).thenReturn(fileMeta);
-    when(fileMeta.getId()).thenReturn("fileId");
-    when(fileMeta.getFilename()).thenReturn("fileName");
+    when(gavinRun.getOutputFile()).thenReturn(Optional.of(fileMeta));
+    when(fileMeta.getId()).thenReturn(FILE_ID);
+    when(fileMeta.getFilename()).thenReturn(FILE_NAME);
     HttpServletResponse httpServletResponse = mock(HttpServletResponse.class);
     when(gavinService.get("id")).thenReturn(gavinRun);
     File file = mock(File.class);
-    when(fileStore.getFile("fileId")).thenReturn(file);
+    when(fileStore.getFile(FILE_ID)).thenReturn(file);
 
     FileSystemResource resource = controller.downloadOutputFile(httpServletResponse, "id");
 
     verify(gavinService).get("id");
-    verify(fileStore).getFile("fileId");
+    verify(fileStore).getFile(FILE_ID);
     assertEquals(resource.getFile(), file);
   }
 
@@ -118,18 +118,18 @@ public class GavinControllerTest extends AbstractMockitoTest {
   public void testDownloadInputFile() {
     GavinRun gavinRun = mock(GavinRun.class);
     FileMeta fileMeta = mock(FileMeta.class);
-    when(gavinRun.getFilteredInputFile()).thenReturn(fileMeta);
-    when(fileMeta.getId()).thenReturn("fileId");
-    when(fileMeta.getFilename()).thenReturn("fileName");
+    when(gavinRun.getFilteredInputFile()).thenReturn(Optional.of(fileMeta));
+    when(fileMeta.getId()).thenReturn(FILE_ID);
+    when(fileMeta.getFilename()).thenReturn(FILE_NAME);
     HttpServletResponse httpServletResponse = mock(HttpServletResponse.class);
     when(gavinService.get("id")).thenReturn(gavinRun);
     File file = mock(File.class);
-    when(fileStore.getFile("fileId")).thenReturn(file);
+    when(fileStore.getFile(FILE_ID)).thenReturn(file);
 
     FileSystemResource resource = controller.downloadInputFile(httpServletResponse, "id");
 
     verify(gavinService).get("id");
-    verify(fileStore).getFile("fileId");
+    verify(fileStore).getFile(FILE_ID);
     assertEquals(resource.getFile(), file);
   }
 
@@ -137,18 +137,18 @@ public class GavinControllerTest extends AbstractMockitoTest {
   public void testDownloadErrorFile() {
     GavinRun gavinRun = mock(GavinRun.class);
     FileMeta fileMeta = mock(FileMeta.class);
-    when(gavinRun.getDiscardedInputFile()).thenReturn(fileMeta);
-    when(fileMeta.getId()).thenReturn("fileId");
-    when(fileMeta.getFilename()).thenReturn("fileName");
+    when(gavinRun.getDiscardedInputFile()).thenReturn(Optional.of(fileMeta));
+    when(fileMeta.getId()).thenReturn(FILE_ID);
+    when(fileMeta.getFilename()).thenReturn(FILE_NAME);
     HttpServletResponse httpServletResponse = mock(HttpServletResponse.class);
     when(gavinService.get("id")).thenReturn(gavinRun);
     File file = mock(File.class);
-    when(fileStore.getFile("fileId")).thenReturn(file);
+    when(fileStore.getFile(FILE_ID)).thenReturn(file);
 
     FileSystemResource resource = controller.downloadErrorFile(httpServletResponse, "id");
 
     verify(gavinService).get("id");
-    verify(fileStore).getFile("fileId");
+    verify(fileStore).getFile(FILE_ID);
     assertEquals(resource.getFile(), file);
   }
 
@@ -162,7 +162,7 @@ public class GavinControllerTest extends AbstractMockitoTest {
 
     verify(gavinService).get("id");
     verifyZeroInteractions(fileStore);
-    verify(httpServletResponse).setStatus(HttpServletResponse.SC_NO_CONTENT);
+    verify(httpServletResponse).setStatus(HttpServletResponse.SC_NOT_FOUND);
   }
 
   @Test
@@ -171,16 +171,17 @@ public class GavinControllerTest extends AbstractMockitoTest {
     GavinRun expiredGavinRun = mock(GavinRun.class);
     GavinRun expiredGavinRunWithoutFiles = mock(GavinRun.class);
 
-    when(gavinRun.getFinishedAt()).thenReturn(Instant.now());
-    when(expiredGavinRun.getFinishedAt()).thenReturn(Instant.ofEpochSecond(0));
-    when(expiredGavinRunWithoutFiles.getFinishedAt()).thenReturn(Instant.ofEpochSecond(0));
+    when(gavinRun.getFinishedAt()).thenReturn(Optional.of(Instant.now()));
+    when(expiredGavinRun.getFinishedAt()).thenReturn(Optional.of(Instant.ofEpochSecond(0)));
+    when(expiredGavinRunWithoutFiles.getFinishedAt())
+        .thenReturn(Optional.of(Instant.ofEpochSecond(0)));
 
     FileMeta filteredInputFileMeta = mock(FileMeta.class);
     FileMeta discardedInputFileMeta = mock(FileMeta.class);
     FileMeta outputFileMeta = mock(FileMeta.class);
-    when(expiredGavinRun.getFilteredInputFile()).thenReturn(filteredInputFileMeta);
-    when(expiredGavinRun.getDiscardedInputFile()).thenReturn(discardedInputFileMeta);
-    when(expiredGavinRun.getOutputFile()).thenReturn(outputFileMeta);
+    when(expiredGavinRun.getFilteredInputFile()).thenReturn(Optional.of(filteredInputFileMeta));
+    when(expiredGavinRun.getDiscardedInputFile()).thenReturn(Optional.of(discardedInputFileMeta));
+    when(expiredGavinRun.getOutputFile()).thenReturn(Optional.of(outputFileMeta));
 
     when(dataService
             .query(GAVIN_RUN, GavinRun.class)

@@ -64,6 +64,11 @@ public class GavinServiceImpl implements GavinService {
     this.parser = requireNonNull(parser);
   }
 
+  /**
+   * Saves the uploaded file, parses it and creates a GavinRun.
+   *
+   * <p>Requires the HttpServletRequest to contain a multipart form with a file named "file".
+   */
   @Override
   @Transactional
   public String upload(HttpServletRequest httpServletRequest) throws IOException {
@@ -154,7 +159,7 @@ public class GavinServiceImpl implements GavinService {
     }
 
     gavinRun.setOutputFile(outputFile);
-    gavinRun.setLog(gavinRun.getLog() + log);
+    gavinRun.setLog(gavinRun.getLog().orElse("") + log);
     gavinRun.setFinishedAt(Instant.now());
     gavinRun.setStatus(Status.SUCCESS);
     dataService.update(GAVIN_RUN, gavinRun);
@@ -166,7 +171,7 @@ public class GavinServiceImpl implements GavinService {
     LOG.info("GavinRun failed: '{}'", id);
 
     GavinRun gavinRun = get(id);
-    gavinRun.setLog(gavinRun.getLog() + log);
+    gavinRun.setLog(gavinRun.getLog().orElse("") + log);
     gavinRun.setFinishedAt(Instant.now());
     gavinRun.setStatus(Status.FAILED);
     dataService.update(GAVIN_RUN, gavinRun);
@@ -174,7 +179,7 @@ public class GavinServiceImpl implements GavinService {
 
   private FileMeta createEmptyFile(String fileName) {
     String id = idGenerator.generateId();
-    try (InputStream inputStream = new ByteArrayInputStream("".getBytes())) {
+    try (InputStream inputStream = new ByteArrayInputStream(new byte[] {})) {
       fileStore.store(inputStream, id);
     } catch (IOException e) {
       throw new UncheckedIOException(e);

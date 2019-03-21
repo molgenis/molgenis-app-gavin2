@@ -61,11 +61,7 @@ public class GavinRunMetadata extends SystemEntityType {
         .setDataType(FILE)
         .setLabel("Output File")
         .setRefEntity(fileMetaMetadata);
-    addAttribute(LOG)
-        .setDataType(AttributeType.TEXT)
-        .setLabel("Log")
-        .setNillable(false)
-        .setDefaultValue("");
+    addAttribute(LOG).setDataType(AttributeType.TEXT).setLabel("Log");
     addAttribute(SUBMITTED_AT).setDataType(DATE_TIME).setLabel("Submitted at").setNillable(false);
     addAttribute(STARTED_AT).setDataType(DATE_TIME).setLabel("Started at");
     addAttribute(FINISHED_AT).setDataType(DATE_TIME).setLabel("Finished at");

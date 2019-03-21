@@ -11,6 +11,7 @@ import static org.molgenis.app.gavin.meta.GavinRunMetadata.STATUS;
 import static org.molgenis.app.gavin.meta.GavinRunMetadata.SUBMITTED_AT;
 
 import java.time.Instant;
+import java.util.Optional;
 import org.molgenis.data.Entity;
 import org.molgenis.data.file.model.FileMeta;
 import org.molgenis.data.meta.model.EntityType;
@@ -48,32 +49,32 @@ public class GavinRun extends StaticEntity {
     set(INPUT_FILE_NAME, inputFileName);
   }
 
-  public FileMeta getFilteredInputFile() {
-    return getEntity(FILTERED_INPUT_FILE, FileMeta.class);
+  public Optional<FileMeta> getFilteredInputFile() {
+    return Optional.ofNullable(getEntity(FILTERED_INPUT_FILE, FileMeta.class));
   }
 
   public void setFilteredInputFile(FileMeta filteredInputFile) {
     set(FILTERED_INPUT_FILE, filteredInputFile);
   }
 
-  public FileMeta getDiscardedInputFile() {
-    return getEntity(DISCARDED_INPUT_FILE, FileMeta.class);
+  public Optional<FileMeta> getDiscardedInputFile() {
+    return Optional.ofNullable(getEntity(DISCARDED_INPUT_FILE, FileMeta.class));
   }
 
   public void setDiscardedInputFile(FileMeta discardedInputFile) {
     set(DISCARDED_INPUT_FILE, discardedInputFile);
   }
 
-  public FileMeta getOutputFile() {
-    return getEntity(OUTPUT_FILE, FileMeta.class);
+  public Optional<FileMeta> getOutputFile() {
+    return Optional.ofNullable(getEntity(OUTPUT_FILE, FileMeta.class));
   }
 
   public void setOutputFile(FileMeta outputFile) {
     set(OUTPUT_FILE, outputFile);
   }
 
-  public String getLog() {
-    return getString(GavinRunMetadata.LOG);
+  public Optional<String> getLog() {
+    return Optional.ofNullable(getString(GavinRunMetadata.LOG));
   }
 
   public void setLog(String log) {
@@ -96,16 +97,16 @@ public class GavinRun extends StaticEntity {
     set(SUBMITTED_AT, dateTime);
   }
 
-  public Instant getStartedAt() {
-    return getInstant(STARTED_AT);
+  public Optional<Instant> getStartedAt() {
+    return Optional.ofNullable(getInstant(STARTED_AT));
   }
 
   public void setStartedAt(Instant dateTime) {
     set(STARTED_AT, dateTime);
   }
 
-  public Instant getFinishedAt() {
-    return getInstant(FINISHED_AT);
+  public Optional<Instant> getFinishedAt() {
+    return Optional.ofNullable(getInstant(FINISHED_AT));
   }
 
   public void setFinishedAt(Instant dateTime) {

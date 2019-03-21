@@ -39,7 +39,7 @@ public abstract class GavinRunResponse {
 
   static GavinRunResponse create(GavinRun gavinRun) {
     String outputUrl =
-        gavinRun.getOutputFile() != null
+        gavinRun.getOutputFile().isPresent()
             ? format("%s/run/%s/download/output", GAVIN, gavinRun.getId())
             : null;
 
@@ -50,9 +50,9 @@ public abstract class GavinRunResponse {
         format("%s/run/%s/download/error", GAVIN, gavinRun.getId()),
         outputUrl,
         gavinRun.getStatus(),
-        gavinRun.getLog(),
+        gavinRun.getLog().orElse(null),
         gavinRun.getSubmittedAt(),
-        gavinRun.getStartedAt(),
-        gavinRun.getFinishedAt());
+        gavinRun.getStartedAt().orElse(null),
+        gavinRun.getFinishedAt().orElse(null));
   }
 }

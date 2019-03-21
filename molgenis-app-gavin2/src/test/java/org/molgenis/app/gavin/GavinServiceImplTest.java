@@ -142,7 +142,6 @@ public class GavinServiceImplTest extends AbstractMockitoTest {
     mockComponentBuilder();
     String id = "test";
     GavinRun gavinRun = mock(GavinRun.class);
-    when(gavinRun.getLog()).thenReturn("");
     when(dataService.findOneById(GAVIN_RUN, id, GavinRun.class)).thenReturn(gavinRun);
     HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
     Part part = mock(Part.class);
@@ -167,7 +166,6 @@ public class GavinServiceImplTest extends AbstractMockitoTest {
   public void testFail() {
     String id = "test";
     GavinRun gavinRun = mock(GavinRun.class);
-    when(gavinRun.getLog()).thenReturn("");
     when(dataService.findOneById(GAVIN_RUN, id, GavinRun.class)).thenReturn(gavinRun);
 
     gavinService.fail(id, "Failed because of x");

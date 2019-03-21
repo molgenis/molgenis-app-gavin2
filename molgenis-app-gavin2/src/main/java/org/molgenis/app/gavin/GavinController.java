@@ -13,8 +13,8 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.stream.Stream;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.molgenis.app.gavin.meta.GavinRun;
@@ -29,11 +29,13 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -57,10 +59,11 @@ public class GavinController {
   }
 
   @RunAsSystem
+  @SuppressWarnings("unused")
   @PostMapping(value = "/upload")
   public ResponseEntity<String> upload(
       @RequestParam(value = "file") MultipartFile inputFile, HttpServletRequest httpServletRequest)
-      throws IOException, ServletException {
+      throws IOException {
     String id = gavinService.upload(httpServletRequest);
     return ResponseEntity.created(java.net.URI.create(id)).body(id);
   }
@@ -72,55 +75,56 @@ public class GavinController {
   }
 
   @PostMapping(value = "/run/{id}/start")
-  public ResponseEntity start(@PathVariable String id) {
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void start(@PathVariable String id) {
     gavinService.start(id);
-    return new ResponseEntity(HttpStatus.OK);
   }
 
+  @SuppressWarnings("unused")
   @PostMapping(value = "/run/{id}/finish")
-  public ResponseEntity finish(
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void finish(
       @PathVariable String id,
       @RequestParam MultipartFile outputFile,
       @RequestParam String log,
       HttpServletRequest httpServletRequest)
-      throws IOException, ServletException {
+      throws IOException {
     gavinService.finish(id, log, httpServletRequest);
-    return new ResponseEntity(HttpStatus.OK);
   }
 
   @PostMapping(value = "/run/{id}/fail")
-  public ResponseEntity start(@PathVariable String id, @RequestParam String log) {
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void fail(@PathVariable String id, @RequestParam String log) {
     gavinService.fail(id, log);
-    return new ResponseEntity(HttpStatus.OK);
   }
 
   @RunAsSystem
   @GetMapping(value = "/run/{id}/download/output", produces = APPLICATION_OCTET_STREAM_VALUE)
   public FileSystemResource downloadOutputFile(
       HttpServletResponse response, @PathVariable(value = "id") String id) {
-    FileMeta outputFile = gavinService.get(id).getOutputFile();
-    return prepareDownload(response, outputFile);
+    Optional<FileMeta> outputFile = gavinService.get(id).getOutputFile();
+    return prepareDownload(response, outputFile.orElse(null));
   }
 
   @RunAsSystem
   @GetMapping(value = "/run/{id}/download/input", produces = APPLICATION_OCTET_STREAM_VALUE)
   public FileSystemResource downloadInputFile(
       HttpServletResponse response, @PathVariable(value = "id") String id) {
-    FileMeta errorFile = gavinService.get(id).getFilteredInputFile();
-    return prepareDownload(response, errorFile);
+    Optional<FileMeta> inputFile = gavinService.get(id).getFilteredInputFile();
+    return prepareDownload(response, inputFile.orElse(null));
   }
 
   @RunAsSystem
   @GetMapping(value = "/run/{id}/download/error", produces = APPLICATION_OCTET_STREAM_VALUE)
   public FileSystemResource downloadErrorFile(
       HttpServletResponse response, @PathVariable(value = "id") String id) {
-    FileMeta errorFile = gavinService.get(id).getDiscardedInputFile();
-    return prepareDownload(response, errorFile);
+    Optional<FileMeta> errorFile = gavinService.get(id).getDiscardedInputFile();
+    return prepareDownload(response, errorFile.orElse(null));
   }
 
   private FileSystemResource prepareDownload(HttpServletResponse response, FileMeta fileMeta) {
     if (fileMeta == null) {
-      response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+      response.setStatus(HttpServletResponse.SC_NOT_FOUND);
       return null;
     }
 
@@ -135,8 +139,9 @@ public class GavinController {
    * GavinRun entities themselves so that they can be used for usage statistics.
    */
   @RunAsSystem
+  @Transactional
   @Scheduled(fixedRate = 5 * 60 * 1000)
-  void cleanUp() {
+  public void cleanUp() {
     LOG.debug("Starting cleanup routine of expired GavinRuns");
 
     Stream<GavinRun> completedGavinRuns =
@@ -154,31 +159,37 @@ public class GavinController {
   }
 
   private boolean containsFiles(GavinRun gavinRun) {
-    return gavinRun.getFilteredInputFile() != null
-        || gavinRun.getDiscardedInputFile() != null
-        || gavinRun.getOutputFile() != null;
+    return gavinRun.getFilteredInputFile().isPresent()
+        || gavinRun.getDiscardedInputFile().isPresent()
+        || gavinRun.getOutputFile().isPresent();
   }
 
   private boolean hasExpired(GavinRun gavinRun) {
-    Duration age = Duration.between(gavinRun.getFinishedAt(), Instant.now());
-    return age.compareTo(RUN_EXPIRATION_TIME) > 0;
+    Optional<Instant> finishedAt = gavinRun.getFinishedAt();
+    if (!finishedAt.isPresent()) {
+      LOG.warn("GavinRun '{}' 'finishedAt' field is null. Marking as expired.", gavinRun.getId());
+      return true;
+    } else {
+      Duration age = Duration.between(finishedAt.get(), Instant.now());
+      return age.compareTo(RUN_EXPIRATION_TIME) > 0;
+    }
   }
 
   private void deleteFilesFromRun(GavinRun gavinRun) {
     LOG.info("Deleting files of expired GavinRun '{}'", gavinRun.getId());
 
-    FileMeta filteredInput = gavinRun.getFilteredInputFile();
-    FileMeta discardedInput = gavinRun.getDiscardedInputFile();
-    FileMeta output = gavinRun.getOutputFile();
+    Optional<FileMeta> filteredInput = gavinRun.getFilteredInputFile();
+    Optional<FileMeta> discardedInput = gavinRun.getDiscardedInputFile();
+    Optional<FileMeta> output = gavinRun.getOutputFile();
 
     gavinRun.setFilteredInputFile(null);
     gavinRun.setDiscardedInputFile(null);
     gavinRun.setOutputFile(null);
     dataService.update(GAVIN_RUN, gavinRun);
 
-    deleteFile(filteredInput);
-    deleteFile(discardedInput);
-    deleteFile(output);
+    deleteFile(filteredInput.orElse(null));
+    deleteFile(discardedInput.orElse(null));
+    deleteFile(output.orElse(null));
 
     LOG.info("Done deleting files of GavinRun '{}'", gavinRun.getId());
   }
