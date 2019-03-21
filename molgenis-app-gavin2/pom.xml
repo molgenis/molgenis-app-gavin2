@@ -5,19 +5,20 @@
   <parent>
     <groupId>org.molgenis</groupId>
     <artifactId>molgenis-gavin2</artifactId>
-    <version>7.4.1-GAVIN2-SNAPSHOT</version>
+    <version>7.4.1-GAVIN2-1.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>molgenis-app-gavin2</artifactId>
   <packaging>war</packaging>
 
   <name>app-gavin2</name>
-  <description>Default MOLGENIS application module containing all default plugins.</description>
+  <description>App containing the Gavin API.</description>
 
   <properties>
     <owasp-check-format>HTML</owasp-check-format>
     <dockerfile-maven-version>1.4.0</dockerfile-maven-version>
     <dockerfile.tag>${project.version}</dockerfile.tag>
-    <dockerfile.repository>registry.hub.docker.com/molgenis/molgenis-app-gavin2</dockerfile.repository>
+    <dockerfile.repository>registry.hub.docker.com/molgenis/molgenis-app-gavin2
+    </dockerfile.repository>
     <dockerfile.warfile.version>${project.version}</dockerfile.warfile.version>
     <dockerfile.warfile>target/${project.artifactId}-${dockerfile.warfile.version}.war
     </dockerfile.warfile>
