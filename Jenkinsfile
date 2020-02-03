@@ -1,7 +1,7 @@
 pipeline {
     agent {
         kubernetes {
-            label 'molgenis'
+            label 'molgenis-jdk11'
         }
     }
     environment {
@@ -14,10 +14,10 @@ pipeline {
             steps {
                 container('vault') {
                     script {
-                        sh "mkdir /home/jenkins/.m2"
-                        sh "mkdir /home/jenkins/.rancher"
-                        sh(script: 'vault read -field=value secret/ops/jenkins/rancher/cli2.json > /home/jenkins/.rancher/cli2.json')
-                        sh(script: 'vault read -field=value secret/ops/jenkins/maven/settings.xml > /home/jenkins/.m2/settings.xml')
+                        sh "mkdir ${JENKINS_AGENT_WORKDIR}/.m2"
+                        sh "mkdir ${JENKINS_AGENT_WORKDIR}/.rancher"
+                        sh(script: "vault read -field=value secret/ops/jenkins/rancher/cli2.json > ${JENKINS_AGENT_WORKDIR}/.rancher/cli2.json")
+                        sh(script: "vault read -field=value secret/ops/jenkins/maven/settings.xml > ${JENKINS_AGENT_WORKDIR}/.m2/settings.xml")
                         env.SONAR_TOKEN = sh(script: 'vault read -field=value secret/ops/token/sonar', returnStdout: true)
                         env.GITHUB_TOKEN = sh(script: 'vault read -field=value secret/ops/token/github', returnStdout: true)
                         env.PGP_PASSPHRASE = 'literal:' + sh(script: 'vault read -field=passphrase secret/ops/certificate/pgp/molgenis-ci', returnStdout: true)
@@ -25,11 +25,8 @@ pipeline {
                         env.GITHUB_USER = sh(script: 'vault read -field=username secret/ops/token/github', returnStdout: true)
                     }
                 }
-                dir('/home/jenkins/.m2') {
+                dir("${JENKINS_AGENT_WORKDIR}/.m2") {
                     stash includes: 'settings.xml', name: 'maven-settings'
-                }
-                dir('/home/jenkins/.rancher') {
-                    stash includes: 'cli2.json', name: 'rancher-config'
                 }
             }
         }
