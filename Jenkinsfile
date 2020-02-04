@@ -1,7 +1,7 @@
 pipeline {
     agent {
         kubernetes {
-            label 'molgenis-jdk11'
+            label 'molgenis-jdk8'
         }
     }
     environment {
