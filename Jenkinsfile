@@ -59,7 +59,7 @@ pipeline {
                 stage('Push to registries [ PR ]') {
                     steps {
                         container('maven') {
-                            dir('molgenis-app') {
+                            dir('molgenis-app-gavin2') {
                                 script {
                                     sh "mvn -q -B dockerfile:build dockerfile:tag dockerfile:push -Ddockerfile.tag=${TAG} -Ddockerfile.repository=${LOCAL_REPOSITORY}"
                                 }
@@ -94,7 +94,7 @@ pipeline {
                 stage('Push to registries [ master ]') {
                     steps {
                         container('maven') {
-                            dir('molgenis-app') {
+                            dir('molgenis-app-gavin2') {
                                 script {
                                     sh "mvn -q -B dockerfile:build dockerfile:tag dockerfile:push -Ddockerfile.tag=${TAG} -Ddockerfile.repository=${LOCAL_REPOSITORY}"
                                     sh "mvn -q -B dockerfile:tag dockerfile:push -Ddockerfile.tag=dev -Ddockerfile.repository=${LOCAL_REPOSITORY}"
